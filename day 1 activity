@@ -1,0 +1,115 @@
+!@CoreBABA
+
+conf t
+	monitor session 1 source interface fa0/3, fa0/5, fa0/7
+	monitor session 1 destination interface fa0/1, fa0/9
+	end
+
+conf t
+	no monitor session 1
+	end
+
+configure D1 & D2 as DHCP Server
+LoadBalance
+
+D1:
+	.100 - .199
+D2: 
+	.200 - 254
+
+!@D1
+
+conf t
+ ip dhcp excluded-address 10.2.1.1 10.2.1.99
+ ip dhcp excluded-address 10.2.1.200 10.2.1.254
+ ip dhcp pool MGMTPool
+  network 10.2.1.0 255.255.255.0
+  default-router 10.2.1.1
+  dns-server 10.2.1.1
+  domain-name d1.com
+  end
+
+
+!@D2
+
+conf t
+ ip dhcp excluded-address 10.2.1.1 10.2.1.199
+ ip dhcp pool MGMTPool
+  network 10.2.1.0 255.255.255.0
+  default-router 10.2.1.2
+  dns-server 10.2.1.2
+  domain-name d2.com
+  end
+
+!@A1
+ conf t
+ int e0/0
+  switchport mode access
+  switchport access vlan 10 
+  end
+
+!@A2
+ conf t
+ int e1/0
+  switchport mode access
+  switchport access vlan 10 
+  end
+
+
+!@P1
+ conf t
+ int e0/0 
+  no shut
+  ip add dhcp
+  end
+
+!@P2
+ conf t
+ int e1/0 
+  no shut
+  ip add dhcp
+  end
+
+show ip dhcp binding
+
+!Activity
+Configure D2 as a DHCP Server for VLAN 20
+Network: 10.2.2.0 255.255.255.0
+Gateway: D2
+Domain Name: dns.com
+DNS: D2
+
+Exclude the first 100 IPs
+
+conf t
+ ip dhcp excluded-address 10.2.1.1 10.2.1.99
+ ip dhcp pool MGMTPool
+  network 10.2.2.0 255.255.255.0
+  default-router 10.2.2.1
+  dns-server 10.2.2.1
+  domain-name dns.com
+  end
+
+!@D2
+
+conf t
+ ip dhcp excluded-address 10.2.1.1 10.2.1.100
+ ip dhcp pool MGMTPool
+  network 10.2.2.0 255.255.255.0
+  default-router 10.2.2.2
+  dns-server 10.2.2.2
+  domain-name dns.com
+  end
+
+conf t
+ int e1/0
+  switchport mode access
+  switchport access vlan 20 
+  end
+
+!@S2
+ conf t
+ int e1/0 
+  no shut
+  ip add dhcp
+  end
